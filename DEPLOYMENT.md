@@ -1,32 +1,31 @@
 # 🚀 Deployment Guide — Streamy
 
-This document provides step-by-step instructions for deploying Streamy to a Linux production server (Ubuntu/Debian) or running it inside a Docker container.
-
----
+This document provides step-by-step instructions for deploying Streamy using **Bun** on a Linux production server (Ubuntu/Debian) or inside a lightweight Docker container.
 
 ## 📋 System Requirements
 
 - **Operating System:** Ubuntu 20.04/22.04 LTS or Debian 11/12
-- **Node.js:** v18.x or v20.x LTS
+- **Runtime & Package Manager:** Bun v1.x
 - **Python:** Python 3.10+ (required for `yt-dlp`)
-- **FFmpeg:** Required by `yt-dlp` for audio/video stream merging and conversion
+- **FFmpeg & Bash:** Required by `yt-dlp` for media processing
 - **Reverse Proxy:** Nginx (recommended)
 
----
+## 🛠️ Option 1: Bare Metal / VPS Deployment (Bun + Systemd + Nginx)
 
-## 🛠️ Option 1: Bare Metal / VPS Deployment (Systemd + Nginx)
+### 1. Install System Dependencies & Bun
 
-### 1. Install System Dependencies
-
-Update your system packages and install Python 3, FFmpeg, and Node.js:
+Update packages and install Python 3, FFmpeg, Bash, and Bun:
 
 ```bash
 sudo apt update && sudo apt upgrade -y
-sudo apt install -y python3 python3-pip ffmpeg git curl
+sudo apt install -y python3 python3-pip ffmpeg git curl bash
 
-# Install Node.js 20 LTS
-curl -fsSL [https://deb.nodesource.com/setup_20.x](https://deb.nodesource.com/setup_20.x) | sudo -E bash -
-sudo apt install -y nodejs
+# Install Bun
+curl -fsSL [https://bun.sh/install](https://bun.sh/install) | bash
+source ~/.bashrc
+
+# Verify installation
+bun --version
 
 ```
 
@@ -43,8 +42,6 @@ yt-dlp --version
 
 ```
 
----
-
 ### 3. Clone and Build the Application
 
 ```bash
@@ -53,19 +50,17 @@ cd /var/www
 sudo git clone [https://github.com/your-username/streamy.git](https://github.com/your-username/streamy.git)
 cd streamy
 
-# Install dependencies
-npm install
+# Install dependencies using Bun
+bun install
 
-# Build Node adapter production bundle
-npm run build
+# Build standalone production bundle
+bun run build
 
 ```
 
----
+### 4. Configure Systemd Service (Bun)
 
-### 4. Configure Systemd Service
-
-Create a systemd service file to manage the Node server process:
+Create a systemd service file to manage the Bun server process:
 
 ```bash
 sudo nano /etc/systemd/system/streamy.service
@@ -76,14 +71,14 @@ Paste the following configuration:
 
 ```ini
 [Unit]
-Description=Streamy SvelteKit Media Extractor
+Description=Streamy SvelteKit Media Extractor (Bun Runtime)
 After=network.target
 
 [Service]
 Type=simple
 User=www-data
 WorkingDirectory=/var/www/streamy
-ExecStart=/usr/bin/node build
+ExecStart=/root/.bun/bin/bun run build/index.js
 Restart=on-failure
 RestartSec=5
 Environment=NODE_ENV=production
@@ -107,8 +102,6 @@ sudo systemctl status streamy
 
 ```
 
----
-
 ### 5. Configure Nginx Reverse Proxy (with SSE Support)
 
 Install Nginx:
@@ -118,14 +111,14 @@ sudo apt install -y nginx
 
 ```
 
-Create a new site block configuration:
+Create a new site configuration:
 
 ```bash
 sudo nano /etc/nginx/sites-available/streamy
 
 ```
 
-Paste the configuration (Note the `proxy_set_header` and buffering tweaks for Server-Sent Events):
+Paste the configuration:
 
 ```nginx
 server {
@@ -161,60 +154,65 @@ sudo systemctl reload nginx
 
 ```
 
----
 
-## 🐳 Option 2: Docker Deployment
+## 🐳 Option 2: Docker Deployment (Bun + FFmpeg + Bash)
 
 ### `Dockerfile`
 
-Create a `Dockerfile` in the project root:
+Create a `Dockerfile` in the project root using `oven/bun`:
 
 ```dockerfile
-# Base image with Node.js
-FROM node:20-slim AS builder
+# Stage 1: Build SvelteKit application using Bun
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install build dependencies
-COPY package*.json ./
-RUN npm ci
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
 
 COPY . .
-RUN npm run build
+RUN bun run build
 
-# Production image
-FROM node:20-slim AS runner
+# Stage 2: Production Runtime
+FROM oven/bun:1-slim AS runner
 
 WORKDIR /app
 
-# Install Python and FFmpeg for yt-dlp runtime
-RUN apt-get update && apt-get install -y \
+# Install system dependencies: bash, ffmpeg, python3, and curl for yt-dlp
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash \
+    ffmpeg \
     python3 \
     python3-pip \
-    ffmpeg \
     curl \
     && curl -L [https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp](https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp) -o /usr/local/bin/yt-dlp \
     && chmod a+rx /usr/local/bin/yt-dlp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy built application assets and production dependencies
 COPY --from=builder /app/build ./build
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json /app/bun.lockb* ./
 
-RUN npm ci --omit=dev
+RUN bun install --production
+
+# Set shell to bash explicitly
+SHELL ["/bin/bash", "-c"]
 
 ENV NODE_ENV=production
 ENV PORT=3000
+
 EXPOSE 3000
 
-CMD ["node", "build"]
+# Start SvelteKit build with Bun
+CMD ["bun", "run", "build/index.js"]
 
 ```
 
 ### Build & Run Docker Container
 
 ```bash
-# Build the image
+# Build the Bun-powered image
 docker build -t streamy:latest .
 
 # Run container on port 3000
@@ -222,13 +220,11 @@ docker run -d -p 3000:3000 --name streamy --restart unless-stopped streamy:lates
 
 ```
 
----
-
 ## 🔄 Maintenance & Updates
 
-### Updating `yt-dlp`
+### 1. Updating `yt-dlp` on Host / VPS
 
-YouTube frequently updates its extractors. Set up an automated daily cron job to keep `yt-dlp` up-to-date:
+Set up an automated daily cron job to keep `yt-dlp` up-to-date on your host server:
 
 ```bash
 sudo crontab -e
@@ -241,3 +237,21 @@ Add this line to update `yt-dlp` every night at midnight:
 0 0 * * * /usr/local/bin/yt-dlp -U >/dev/null 2>&1
 
 ```
+
+### 2. Updating `yt-dlp` inside Docker
+
+Because YouTube extractors update frequently, you can automatically update `yt-dlp` inside a running Docker container without rebuilding the entire image:
+
+```bash
+# Run yt-dlp update inside the active container
+docker exec -it streamy yt-dlp -U
+
+```
+
+Alternatively, add a cron job on your Docker host machine:
+
+```cron
+0 0 * * * docker exec streamy yt-dlp -U >/dev/null 2>&1
+
+```
+
