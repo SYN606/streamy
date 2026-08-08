@@ -1,85 +1,152 @@
-<div class="mx-auto max-w-3xl space-y-10 py-4">
+<script>
+	import { Icon } from 'svelte-icons-pack';
+	import {
+		LuInfo,
+		LuZap,
+		LuShieldCheck,
+		LuSparkles,
+		LuHelpCircle,
+		LuCheckCircle2,
+		LuArrowRight,
+		LuDownload,
+		LuLayers
+	} from 'svelte-icons-pack/lu';
+
+	const features = [
+		{
+			title: 'Ultra Fast Extraction',
+			description:
+				'Powered by yt-dlp backend with real-time SSE progress streaming for instant conversions.',
+			icon: LuZap
+		},
+		{
+			title: 'No Ads or Trackers',
+			description:
+				'Pure, lightweight media processing experience without intrusive popup ads or telemetry.',
+			icon: LuShieldCheck
+		},
+		{
+			title: 'Playlist & Batch Support',
+			description:
+				'Extract multi-track YouTube playlists seamlessly into customizable MP3 or MP4 formats.',
+			icon: LuLayers
+		},
+		{
+			title: 'High Definition Audio & Video',
+			description:
+				'Supports up to 4K resolution videos and highest quality 320kbps audio bitrate streams.',
+			icon: LuSparkles
+		}
+	];
+
+	const faqs = [
+		{
+			question: 'Is Streamy free to use?',
+			answer:
+				'Yes, Streamy is completely free and open-source. There are no download limits or premium paywalls.'
+		},
+		{
+			question: 'Which formats are supported for download?',
+			answer:
+				'You can extract media in MP4 HD video format or convert directly to pristine MP3/M4A audio.'
+		},
+		{
+			question: 'How does real-time download progress work?',
+			answer:
+				'Streamy leverages Server-Sent Events (SSE) to push exact download percentage and speed metrics directly to your screen in real time.'
+		},
+		{
+			question: 'Is my search and download history stored permanently?',
+			answer:
+				'No. All history items are saved locally in your active browser session and can be cleared at any time.'
+		}
+	];
+</script>
+
+<div class="mx-auto max-w-4xl space-y-12 py-4">
 	<!-- Hero Header -->
 	<div class="space-y-3 text-center">
-		<span
-			class="inline-flex items-center gap-1.5 rounded-full border border-sky-500/20 bg-sky-500/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-sky-400 uppercase backdrop-blur-md"
-		>
-			<span class="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400"></span>
-			About Streamy
-		</span>
+		<div class="flex justify-center">
+			<span
+				class="inline-flex items-center gap-1.5 rounded-full border border-glass-border bg-cyan-500/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-cyan-accent uppercase shadow-[0_0_15px_rgba(6,182,212,0.15)] backdrop-blur-md"
+			>
+				<Icon src={LuInfo} className="w-3.5 h-3.5 text-cyan-300" />
+				<span>About & FAQ</span>
+			</span>
+		</div>
+
 		<h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-			High-Performance <span
-				class="bg-linear-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent"
-				>Media Extraction</span
+			High-Speed <span
+				class="bg-linear-to-r from-cyan-accent via-sky-glow to-blue-glow bg-clip-text text-transparent"
+				>Media Converter</span
 			>
 		</h1>
-		<p class="mx-auto max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-			Streamy is a lightweight, zero-storage YouTube media converter designed to stream audio and
-			video straight to your device.
+		<p class="mx-auto max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
+			Streamy is a modern web application engineered for quick, seamless video and audio extraction
+			with zero clutter.
 		</p>
 	</div>
 
-	<!-- Core Features Grid -->
-	<div class="grid gap-4 sm:grid-cols-2">
-		<div class="glass-card space-y-3 rounded-2xl p-6 shadow-xl">
-			<div
-				class="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-500/30 bg-sky-500/15 text-base font-bold text-sky-400 shadow-inner"
-			>
-				⚡
+	<!-- Feature Grid -->
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+		{#each features as feature}
+			<div class="glass-card flex flex-col gap-3 rounded-2xl p-6">
+				<div
+					class="flex h-10 w-10 items-center justify-center rounded-xl border border-glass-border bg-cyan-500/10 text-cyan-300 shadow-inner"
+				>
+					<Icon src={feature.icon} className="w-5 h-5" />
+				</div>
+				<h3 class="text-base font-bold text-white">{feature.title}</h3>
+				<p class="text-xs leading-relaxed text-slate-300 sm:text-sm">
+					{feature.description}
+				</p>
 			</div>
-			<h3 class="text-lg font-bold text-white">Direct Stream Piping</h3>
-			<p class="text-sm leading-relaxed text-slate-300">
-				Media is streamed chunk-by-chunk through memory to your browser, eliminating wait times and
-				server disk storage bottlenecks.
-			</p>
-		</div>
-
-		<div class="glass-card space-y-3 rounded-2xl p-6 shadow-xl">
-			<div
-				class="flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/15 text-base font-bold text-cyan-400 shadow-inner"
-			>
-				🔒
-			</div>
-			<h3 class="text-lg font-bold text-white">Privacy First</h3>
-			<p class="text-sm leading-relaxed text-slate-300">
-				We don't track download history on server databases. Your conversions are private and
-				transient.
-			</p>
-		</div>
+		{/each}
 	</div>
 
 	<!-- FAQ Section -->
-	<div class="glass-panel space-y-6 rounded-3xl p-6 shadow-2xl sm:p-8">
-		<h2 class="text-xl font-extrabold tracking-tight text-white sm:text-2xl">
-			Frequently Asked Questions
-		</h2>
-
-		<div class="space-y-4 divide-y divide-white/10">
-			<div class="space-y-1.5 pt-4 first:pt-0">
-				<h3 class="text-base font-bold text-slate-100">Is there a download size limit?</h3>
-				<p class="text-sm leading-relaxed text-slate-300">
-					No hard file size limits are enforced. However, speed and performance depend on your
-					network connection and YouTube's response rates.
-				</p>
+	<div class="glass-panel-glow space-y-6 rounded-3xl p-6 sm:p-8">
+		<div class="flex items-center gap-2.5 border-b border-white/10 pb-4">
+			<div
+				class="flex h-8 w-8 items-center justify-center rounded-lg border border-glass-border bg-cyan-500/10 text-cyan-300"
+			>
+				<Icon src={LuHelpCircle} className="w-4 h-4" />
 			</div>
-
-			<div class="space-y-1.5 pt-5">
-				<h3 class="text-base font-bold text-slate-100">What formats are supported?</h3>
-				<p class="text-sm leading-relaxed text-slate-300">
-					Streamy supports direct MP4 video downloads, as well as MP3, M4A, and WebM audio
-					extractions.
-				</p>
-			</div>
-
-			<div class="space-y-1.5 pt-5">
-				<h3 class="text-base font-bold text-slate-100">What technology powers Streamy?</h3>
-				<p class="text-sm leading-relaxed text-slate-300">
-					Built with SvelteKit, Bun runtime, Tailwind CSS v4, and powered under the hood by <code
-						class="rounded-lg border border-sky-400/20 bg-sky-500/10 px-2 py-0.5 font-mono text-xs font-semibold text-sky-300"
-						>yt-dlp</code
-					>.
-				</p>
-			</div>
+			<h2 class="text-xl font-extrabold text-white">Frequently Asked Questions</h2>
 		</div>
+
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			{#each faqs as faq}
+				<div class="glass-card space-y-2 rounded-2xl p-5">
+					<h3 class="flex items-start gap-2 text-sm font-bold text-cyan-200">
+						<Icon src={LuCheckCircle2} className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
+						<span>{faq.question}</span>
+					</h3>
+					<p class="pl-6 text-xs leading-relaxed text-slate-300">
+						{faq.answer}
+					</p>
+				</div>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Call to Action Footer Box -->
+	<div
+		class="glass-panel flex flex-col items-center justify-between gap-4 rounded-3xl p-8 text-center sm:flex-row sm:text-left"
+	>
+		<div class="space-y-1">
+			<h3 class="text-lg font-bold text-white">Ready to download your favorite media?</h3>
+			<p class="text-xs text-slate-300">
+				Convert videos or audio streams in seconds without registration.
+			</p>
+		</div>
+		<a
+			href="/"
+			class="glass-button flex shrink-0 items-center gap-2 rounded-xl px-6 py-3 text-xs font-semibold text-white transition"
+		>
+			<Icon src={LuDownload} className="w-4 h-4" />
+			<span>Start Converting</span>
+			<Icon src={LuArrowRight} className="w-3.5 h-3.5" />
+		</a>
 	</div>
 </div>
