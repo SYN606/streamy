@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+bun.lock
+bun.lockb
+
+# SvelteKit build output & cache
+.svelte-kit/
+build/
+dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Temporary media downloads (if any are stored locally)
+tmp/
+tmp_downloads/
+*.mp4
+*.m4a
+*.webm
+*.mp3
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
