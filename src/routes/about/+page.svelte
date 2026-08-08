@@ -5,148 +5,305 @@
 		LuZap,
 		LuShieldCheck,
 		LuSparkles,
-		LuHelpCircle,
-		LuCheckCircle2,
+		LuCircleHelp,
+		LuCheck,
 		LuArrowRight,
 		LuDownload,
-		LuLayers
+		LuLayers,
+		LuChevronDown,
+		LuCpu,
+		LuHardDrive,
+		LuLock,
+		LuGlobe
 	} from 'svelte-icons-pack/lu';
+
+	// Interactive FAQ expansion state
+	let openFaq = $state(0);
 
 	const features = [
 		{
 			title: 'Ultra Fast Extraction',
 			description:
-				'Powered by yt-dlp backend with real-time SSE progress streaming for instant conversions.',
+				'Powered by a modern, high-performance yt-dlp backend with real-time SSE progress streaming for instant conversions.',
 			icon: LuZap
 		},
 		{
 			title: 'No Ads or Trackers',
 			description:
-				'Pure, lightweight media processing experience without intrusive popup ads or telemetry.',
+				'Enjoy a pure, distraction-free media extraction experience without intrusive popups, ad redirects, or telemetry tracking.',
 			icon: LuShieldCheck
 		},
 		{
-			title: 'Playlist & Batch Support',
+			title: 'Playlist & Batch Extraction',
 			description:
-				'Extract multi-track YouTube playlists seamlessly into customizable MP3 or MP4 formats.',
+				'Extract multi-track YouTube playlists or SoundCloud albums seamlessly into customized MP3 audio or MP4 video packages.',
 			icon: LuLayers
 		},
 		{
 			title: 'High Definition Audio & Video',
 			description:
-				'Supports up to 4K resolution videos and highest quality 320kbps audio bitrate streams.',
+				'Preserve crisp video streams up to 4K 60fps resolution and audiophile-grade 320kbps audio bitrate tracks.',
 			icon: LuSparkles
+		}
+	];
+
+	const specs = [
+		{
+			title: 'Supported Output Formats',
+			items: [
+				'MP3 (320kbps, 256kbps, 128kbps)',
+				'MP4 (4K, 1080p, 720p, 480p)',
+				'AAC & WebM Audio/Video Streams'
+			],
+			icon: LuHardDrive
+		},
+		{
+			title: 'Performance & Engine',
+			items: [
+				'Server-Sent Events (SSE) Live Status',
+				'High-bandwidth Stream Passthrough',
+				'Automated Format Transcoding'
+			],
+			icon: LuCpu
+		},
+		{
+			title: 'Privacy & Security Standards',
+			items: [
+				'Zero Persistent Server Storage',
+				'Client-side Local Session Storage',
+				'Fully Open Source Architecture'
+			],
+			icon: LuLock
 		}
 	];
 
 	const faqs = [
 		{
-			question: 'Is Streamy free to use?',
+			question: 'Is Streamy completely free to use?',
 			answer:
-				'Yes, Streamy is completely free and open-source. There are no download limits or premium paywalls.'
+				'Yes, Streamy is 100% free and open-source. There are no premium paywalls, daily conversion limits, or hidden subscriptions required.'
 		},
 		{
-			question: 'Which formats are supported for download?',
+			question: 'Which formats and video resolutions are supported?',
 			answer:
-				'You can extract media in MP4 HD video format or convert directly to pristine MP3/M4A audio.'
+				'You can convert content directly to MP4 (from 360p up to pristine 4K 60fps) or extract audio directly as high-bitrate MP3s (up to 320kbps).'
 		},
 		{
-			question: 'How does real-time download progress work?',
+			question: 'How does the real-time progress bar work?',
 			answer:
-				'Streamy leverages Server-Sent Events (SSE) to push exact download percentage and speed metrics directly to your screen in real time.'
+				'Streamy utilizes Server-Sent Events (SSE) to push instant status notifications, conversion percentages, and download throughput metrics directly to your client screen in real time.'
 		},
 		{
-			question: 'Is my search and download history stored permanently?',
+			question: 'Is my search or download history saved on any server?',
 			answer:
-				'No. All history items are saved locally in your active browser session and can be cleared at any time.'
+				'No. Streamy respects user privacy. Your conversion history is strictly saved inside your browser local storage (`localStorage`) and can be cleared instantly at any time.'
+		},
+		{
+			question: 'Can I download an entire YouTube playlist at once?',
+			answer:
+				'Yes! Simply navigate to our Playlist Extractor, paste any public playlist URL, select your preferred quality setting, and convert all tracks in batch mode.'
 		}
 	];
+
+	function toggleFaq(index) {
+		openFaq = openFaq === index ? -1 : index;
+	}
 </script>
 
-<div class="mx-auto max-w-4xl space-y-12 py-4">
+<div class="mx-auto max-w-5xl space-y-16 py-8">
 	<!-- Hero Header -->
-	<div class="space-y-3 text-center">
+	<div class="space-y-6 text-center">
 		<div class="flex justify-center">
 			<span
-				class="inline-flex items-center gap-1.5 rounded-full border border-glass-border bg-cyan-500/10 px-4 py-1.5 text-xs font-semibold tracking-wider text-cyan-accent uppercase shadow-[0_0_15px_rgba(6,182,212,0.15)] backdrop-blur-md"
+				class="inline-flex items-center gap-2 rounded-full border border-glass-border bg-cyan-500/10 px-5 py-2 text-xs font-semibold tracking-wider text-cyan-300 uppercase shadow-[0_0_20px_rgba(6,182,212,0.2)] backdrop-blur-md"
 			>
-				<Icon src={LuInfo} className="w-3.5 h-3.5 text-cyan-300" />
-				<span>About & FAQ</span>
+				{#if LuInfo}
+					<Icon src={LuInfo} className="w-4 h-4 text-cyan-300" />
+				{/if}
+				<span>About Streamy & FAQ</span>
 			</span>
 		</div>
 
-		<h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
-			High-Speed <span
+		<h1 class="text-4xl font-black tracking-tight text-white sm:text-6xl sm:leading-tight">
+			High-Speed Next-Gen <br class="hidden sm:inline" />
+			<span
 				class="bg-linear-to-r from-cyan-accent via-sky-glow to-blue-glow bg-clip-text text-transparent"
-				>Media Converter</span
 			>
+				Media Conversion Engine
+			</span>
 		</h1>
-		<p class="mx-auto max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base">
-			Streamy is a modern web application engineered for quick, seamless video and audio extraction
-			with zero clutter.
+
+		<p class="mx-auto max-w-2xl text-base leading-relaxed text-slate-300 sm:text-lg">
+			Streamy is a lightweight, high-performance web suite engineered for effortless video and audio
+			extraction. Experience zero ads, zero bloat, and real-time conversion feedback.
 		</p>
-	</div>
 
-	<!-- Feature Grid -->
-	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-		{#each features as feature}
-			<div class="glass-card flex flex-col gap-3 rounded-2xl p-6">
-				<div
-					class="flex h-10 w-10 items-center justify-center rounded-xl border border-glass-border bg-cyan-500/10 text-cyan-300 shadow-inner"
-				>
-					<Icon src={feature.icon} className="w-5 h-5" />
-				</div>
-				<h3 class="text-base font-bold text-white">{feature.title}</h3>
-				<p class="text-xs leading-relaxed text-slate-300 sm:text-sm">
-					{feature.description}
-				</p>
-			</div>
-		{/each}
-	</div>
-
-	<!-- FAQ Section -->
-	<div class="glass-panel-glow space-y-6 rounded-3xl p-6 sm:p-8">
-		<div class="flex items-center gap-2.5 border-b border-white/10 pb-4">
-			<div
-				class="flex h-8 w-8 items-center justify-center rounded-lg border border-glass-border bg-cyan-500/10 text-cyan-300"
+		<div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+			<a
+				href="/"
+				class="glass-button inline-flex cursor-pointer items-center gap-2 rounded-xl px-7 py-3.5 text-xs font-bold text-white shadow-xl transition"
 			>
-				<Icon src={LuHelpCircle} className="w-4 h-4" />
-			</div>
-			<h2 class="text-xl font-extrabold text-white">Frequently Asked Questions</h2>
+				{#if LuDownload}
+					<Icon src={LuDownload} className="w-4 h-4 text-cyan-300" />
+				{/if}
+				<span>Single Video Extractor</span>
+			</a>
+			<a
+				href="/playlist"
+				class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-7 py-3.5 text-xs font-bold text-slate-200 transition hover:bg-white/10"
+			>
+				{#if LuLayers}
+					<Icon src={LuLayers} className="w-4 h-4 text-cyan-400" />
+				{/if}
+				<span>Playlist Extractor</span>
+			</a>
+		</div>
+	</div>
+
+	<!-- Feature Grid Showcase -->
+	<div class="space-y-6">
+		<div class="space-y-2 text-center">
+			<h2 class="text-2xl font-bold text-white sm:text-3xl">Engineered for Quality</h2>
+			<p class="text-sm text-slate-400">Everything you need for clean, reliable media downloads.</p>
 		</div>
 
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-			{#each faqs as faq}
-				<div class="glass-card space-y-2 rounded-2xl p-5">
-					<h3 class="flex items-start gap-2 text-sm font-bold text-cyan-200">
-						<Icon src={LuCheckCircle2} className="w-4 h-4 mt-0.5 shrink-0 text-cyan-400" />
-						<span>{faq.question}</span>
-					</h3>
-					<p class="pl-6 text-xs leading-relaxed text-slate-300">
-						{faq.answer}
+		<div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+			{#each features as feature}
+				<div
+					class="glass-card flex flex-col space-y-3 rounded-2xl p-7 transition hover:border-cyan-500/30"
+				>
+					<div
+						class="flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-cyan-500/10 text-cyan-300 shadow-inner"
+					>
+						{#if feature.icon}
+							<Icon src={feature.icon} className="w-6 h-6" />
+						{/if}
+					</div>
+					<h3 class="text-lg font-bold text-white">{feature.title}</h3>
+					<p class="text-xs leading-relaxed text-slate-300 sm:text-sm">
+						{feature.description}
 					</p>
 				</div>
 			{/each}
 		</div>
 	</div>
 
-	<!-- Call to Action Footer Box -->
+	<!-- Capabilities & Technical Specifications -->
+	<div class="glass-panel space-y-8 rounded-3xl p-6 sm:p-10">
+		<div class="space-y-2 text-center sm:text-left">
+			<span class="text-xs font-bold tracking-widest text-cyan-300 uppercase"
+				>Platform Capabilities</span
+			>
+			<h2 class="text-2xl font-black text-white sm:text-3xl">System Specifications</h2>
+		</div>
+
+		<div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+			{#each specs as spec}
+				<div class="glass-card space-y-4 rounded-2xl border border-white/5 p-6">
+					<div class="flex items-center gap-3">
+						<div
+							class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-cyan-500/10 text-cyan-300"
+						>
+							{#if spec.icon}
+								<Icon src={spec.icon} className="w-5 h-5" />
+							{/if}
+						</div>
+						<h3 class="text-sm leading-tight font-bold text-white">{spec.title}</h3>
+					</div>
+					<ul class="space-y-2 border-t border-white/10 pt-2 text-xs text-slate-300">
+						{#each spec.items as item}
+							<li class="flex items-center gap-2">
+								{#if LuCheck}
+									<Icon src={LuCheck} className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+								{/if}
+								<span>{item}</span>
+							</li>
+						{/each}
+					</ul>
+				</div>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Accordion Interactive FAQ Section -->
+	<div class="glass-panel-glow space-y-8 rounded-3xl p-6 sm:p-10">
+		<div class="flex items-center gap-3 border-b border-white/10 pb-5">
+			<div
+				class="flex h-10 w-10 items-center justify-center rounded-xl border border-glass-border bg-cyan-500/10 text-cyan-300 shadow-inner"
+			>
+				{#if LuCircleHelp}
+					<Icon src={LuCircleHelp} className="w-5 h-5" />
+				{/if}
+			</div>
+			<div>
+				<h2 class="text-2xl font-black text-white">Frequently Asked Questions</h2>
+				<p class="text-xs text-slate-400">
+					Everything you need to know about converted media & streams.
+				</p>
+			</div>
+		</div>
+
+		<div class="space-y-3">
+			{#each faqs as faq, index}
+				<div
+					class="glass-card overflow-hidden rounded-2xl border transition-all duration-200 {openFaq ===
+					index
+						? 'border-cyan-500/40 bg-white/10'
+						: 'border-white/5 hover:border-white/15'}"
+				>
+					<button
+						type="button"
+						onclick={() => toggleFaq(index)}
+						class="flex w-full cursor-pointer items-center justify-between gap-4 p-5 text-left"
+					>
+						<span class="text-sm font-bold text-white sm:text-base">{faq.question}</span>
+						<div
+							class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/5 text-slate-300 transition-transform duration-200 {openFaq ===
+							index
+								? 'rotate-180 text-cyan-300'
+								: ''}"
+						>
+							{#if LuChevronDown}
+								<Icon src={LuChevronDown} className="w-4 h-4" />
+							{/if}
+						</div>
+					</button>
+
+					{#if openFaq === index}
+						<div
+							class="animate-in fade-in border-t border-white/10 bg-black/20 p-5 text-xs leading-relaxed text-slate-300 duration-200 sm:text-sm"
+						>
+							{faq.answer}
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Call to Action Banner -->
 	<div
-		class="glass-panel flex flex-col items-center justify-between gap-4 rounded-3xl p-8 text-center sm:flex-row sm:text-left"
+		class="glass-panel flex flex-col items-center justify-between gap-6 rounded-3xl p-8 text-center sm:flex-row sm:p-10 sm:text-left"
 	>
-		<div class="space-y-1">
-			<h3 class="text-lg font-bold text-white">Ready to download your favorite media?</h3>
-			<p class="text-xs text-slate-300">
-				Convert videos or audio streams in seconds without registration.
+		<div class="space-y-2">
+			<h3 class="text-xl font-extrabold text-white sm:text-2xl">
+				Ready to download your favorite media?
+			</h3>
+			<p class="max-w-lg text-xs text-slate-300 sm:text-sm">
+				Convert videos or audio tracks in seconds without ads, limits, or registration.
 			</p>
 		</div>
 		<a
 			href="/"
-			class="glass-button flex shrink-0 items-center gap-2 rounded-xl px-6 py-3 text-xs font-semibold text-white transition"
+			class="glass-button flex shrink-0 cursor-pointer items-center gap-2.5 rounded-xl px-7 py-4 text-xs font-bold text-white transition active:scale-[0.98]"
 		>
-			<Icon src={LuDownload} className="w-4 h-4" />
-			<span>Start Converting</span>
-			<Icon src={LuArrowRight} className="w-3.5 h-3.5" />
+			{#if LuDownload}
+				<Icon src={LuDownload} className="w-4 h-4" />
+			{/if}
+			<span>Start Converting Now</span>
+			{#if LuArrowRight}
+				<Icon src={LuArrowRight} className="w-4 h-4" />
+			{/if}
 		</a>
 	</div>
 </div>
