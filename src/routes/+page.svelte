@@ -1,8 +1,15 @@
 <script>
+	import VideoCard from '$lib/components/VideoCard.svelte';
+	import ProgressBar from '$lib/components/ProgressBar.svelte';
+
 	let url = $state('');
 	let loading = $state(false);
 	let videoData = $state(null);
 	let errorMsg = $state('');
+
+	// Real-Time Progress State
+	let progress = $state(0);
+	let isDownloading = $state(false);
 
 	async function handleSubmit(e) {
 		e.preventDefault();
@@ -11,6 +18,8 @@
 		loading = true;
 		errorMsg = '';
 		videoData = null;
+		isDownloading = false;
+		progress = 0;
 
 		try {
 			const res = await fetch('/api/info', {
@@ -22,42 +31,84 @@
 			const data = await res.json();
 
 			if (!res.ok) {
-				throw new Error(data.message || 'Failed to analyze video');
+				throw new Error(data.message || 'Failed to analyze media URL');
 			}
 
 			videoData = data;
 		} catch (err) {
-			errorMsg = err.message || 'Something went wrong';
+			errorMsg = err.message || 'Something went wrong. Please verify the URL.';
 		} finally {
 			loading = false;
 		}
 	}
+
+	function handleStartDownload(selectedFormat) {
+		isDownloading = true;
+		progress = 0;
+
+		const sseUrl = `/api/progress?url=${encodeURIComponent(url)}&format=${encodeURIComponent(selectedFormat)}`;
+		const eventSource = new EventSource(sseUrl);
+
+		eventSource.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+
+			if (data.percent !== undefined) {
+				progress = data.percent;
+			}
+
+			if (data.done) {
+				eventSource.close();
+				setTimeout(() => {
+					isDownloading = false;
+				}, 1200);
+			}
+		};
+
+		eventSource.onerror = () => {
+			eventSource.close();
+			isDownloading = false;
+			errorMsg = 'Download connection interrupted. Please try again.';
+		};
+	}
 </script>
 
-<div class="mx-auto max-w-2xl space-y-8">
-	<!-- Hero Header -->
-	<div class="space-y-2 text-center">
-		<h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl">
-			Download YouTube Media <span class="text-red-500">Instantly</span>
+<div class="mx-auto max-w-2xl space-y-8 py-4">
+	<!-- Hero Section -->
+	<div class="space-y-3 text-center">
+		<span
+			class="inline-flex items-center gap-1.5 rounded-full border border-sky-500/20 bg-sky-500/10 px-4 py-1.5 text-xs font-semibold text-sky-400 backdrop-blur-md"
+		>
+			<span class="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400"></span>
+			Fast & Private Downloader
+		</span>
+
+		<h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+			Convert & Download <span
+				class="bg-linear-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent"
+				>Media Instantly</span
+			>
 		</h1>
-		<p class="text-sm text-zinc-400 sm:text-base">
-			Paste any video URL below to extract formats and stream directly without limits.
+		<p class="mx-auto max-w-lg text-base leading-relaxed text-slate-300 sm:text-lg">
+			Paste any YouTube link below to extract audio or high-definition video formats directly.
 		</p>
 	</div>
 
-	<!-- Input Form -->
-	<form onsubmit={handleSubmit} class="flex flex-col gap-3 sm:flex-row">
+	<!-- Form Input -->
+	<form
+		onsubmit={handleSubmit}
+		class="glass-panel flex flex-col gap-2.5 rounded-2xl p-2 shadow-2xl sm:flex-row sm:p-3"
+	>
 		<input
 			type="url"
 			bind:value={url}
-			placeholder="Paste YouTube video link here..."
+			placeholder="Paste video or audio link here..."
 			required
-			class="flex-1 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3.5 text-zinc-100 placeholder-zinc-500 transition focus:border-red-500 focus:ring-2 focus:ring-red-500/50 focus:outline-none"
+			class="glass-input flex-1 rounded-xl border border-white/10 px-4 py-3.5 text-base placeholder-slate-400 focus:border-sky-400 focus:outline-none"
 		/>
 		<button
 			type="submit"
-			disabled={loading}
-			class="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-6 py-3.5 font-medium text-white transition hover:bg-red-500 active:bg-red-700 disabled:opacity-50"
+			disabled={loading || isDownloading}
+			class="glass-button flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white transition disabled:opacity-50"
 		>
 			{#if loading}
 				<svg class="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
@@ -69,9 +120,9 @@
 						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
 					></path>
 				</svg>
-				<span>Analyzing...</span>
+				<span>Processing...</span>
 			{:else}
-				<span>Fetch Video</span>
+				<span>Fetch Formats</span>
 			{/if}
 		</button>
 	</form>
@@ -79,59 +130,17 @@
 	<!-- Error Alert -->
 	{#if errorMsg}
 		<div
-			class="rounded-xl border border-red-900/50 bg-red-950/40 p-4 text-center text-sm text-red-400"
+			class="glass-card rounded-2xl border border-red-500/30 bg-red-950/20 p-4 text-center text-sm font-medium text-red-300 shadow-xl"
 		>
 			{errorMsg}
 		</div>
 	{/if}
 
-	<!-- Results Card -->
+	<!-- Real-Time Progress Stream Bar -->
+	<ProgressBar {progress} {isDownloading} />
+
+	<!-- Video Metadata & Format Results Card -->
 	{#if videoData}
-		<div
-			class="space-y-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 p-6 shadow-xl"
-		>
-			<div class="flex flex-col items-start gap-4 sm:flex-row">
-				<img
-					src={videoData.thumbnail}
-					alt={videoData.title}
-					class="aspect-video w-full rounded-xl border border-zinc-800 object-cover sm:w-48"
-				/>
-				<div class="flex-1 space-y-1.5">
-					<h2 class="line-clamp-2 text-lg font-bold">{videoData.title}</h2>
-					<p class="text-xs text-zinc-400">By {videoData.uploader}</p>
-				</div>
-			</div>
-
-			<!-- Format List -->
-			<div class="space-y-3 border-t border-zinc-800 pt-4">
-				<h3 class="text-sm font-semibold text-zinc-300">Available Formats</h3>
-				<div class="space-y-2">
-					{#each videoData.formats as fmt}
-						<div
-							class="flex items-center justify-between rounded-xl border border-zinc-800/60 bg-zinc-950/60 p-3 text-sm"
-						>
-							<div class="flex items-center gap-3">
-								<span
-									class="rounded px-2 py-0.5 text-xs font-bold uppercase {fmt.type === 'audio'
-										? 'border border-amber-500/20 bg-amber-500/10 text-amber-400'
-										: 'border border-blue-500/20 bg-blue-500/10 text-blue-400'}"
-								>
-									{fmt.resolution}
-								</span>
-								<span class="text-xs text-zinc-400">{fmt.ext} • {fmt.filesize}</span>
-							</div>
-
-							<a
-								href="/api/download?url={encodeURIComponent(url)}&format={fmt.format_id}"
-								download
-								class="rounded-lg bg-zinc-800 px-4 py-1.5 text-xs font-medium text-zinc-100 transition hover:bg-zinc-700"
-							>
-								Download
-							</a>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</div>
+		<VideoCard video={videoData} originalUrl={url} onDownload={handleStartDownload} />
 	{/if}
 </div>

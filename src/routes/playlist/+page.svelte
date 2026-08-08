@@ -1,9 +1,16 @@
 <script>
+	import ProgressBar from '$lib/components/ProgressBar.svelte';
+
 	let playlistUrl = $state('');
 	let loading = $state(false);
 	let playlistData = $state(null);
 	let errorMsg = $state('');
 	let selectedFormat = $state('bestvideo+bestaudio/best');
+
+	// Real-time batch downloading state
+	let isDownloading = $state(false);
+	let currentTrackIndex = $state(0);
+	let progress = $state(0);
 
 	async function handleFetchPlaylist(e) {
 		e.preventDefault();
@@ -23,53 +30,87 @@
 			const data = await res.json();
 
 			if (!res.ok) {
-				throw new Error(data.message || 'Failed to parse playlist');
+				throw new Error(data.message || 'Failed to analyze playlist');
 			}
 
 			playlistData = data;
 		} catch (err) {
-			errorMsg = err.message || 'Something went wrong while fetching the playlist';
+			errorMsg = err.message || 'Something went wrong while fetching the playlist.';
 		} finally {
 			loading = false;
 		}
 	}
+
+	function handleDownloadTrack(trackUrl, index) {
+		currentTrackIndex = index;
+		isDownloading = true;
+		progress = 0;
+
+		const sseUrl = `/api/progress?url=${encodeURIComponent(trackUrl)}&format=${encodeURIComponent(selectedFormat)}`;
+		const eventSource = new EventSource(sseUrl);
+
+		eventSource.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+
+			if (data.percent !== undefined) {
+				progress = data.percent;
+			}
+
+			if (data.done) {
+				eventSource.close();
+				setTimeout(() => {
+					isDownloading = false;
+				}, 1200);
+			}
+		};
+
+		eventSource.onerror = () => {
+			eventSource.close();
+			isDownloading = false;
+			errorMsg = 'Download connection interrupted. Please try again.';
+		};
+	}
 </script>
 
 <div class="mx-auto max-w-3xl space-y-8 py-4">
-	<!-- Header -->
-	<div class="space-y-2 text-center">
+	<!-- Hero Section -->
+	<div class="space-y-3 text-center">
 		<span
-			class="inline-block rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-1.5 text-xs font-bold tracking-widest text-cyan-400 uppercase"
+			class="inline-flex items-center gap-1.5 rounded-full border border-sky-500/20 bg-sky-500/10 px-4 py-1.5 text-xs font-semibold text-sky-400 backdrop-blur-md"
 		>
-			Batch Downloader
+			<span class="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-400"></span>
+			Batch Converter
 		</span>
-		<h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-			Playlist <span class="text-sky-400">Extractor</span>
+
+		<h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+			Playlist <span class="bg-linear-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent"
+				>Extractor</span
+			>
 		</h1>
-		<p class="mx-auto max-w-md text-sm text-slate-400">
-			Paste a YouTube playlist URL to unpack all videos and download formats in bulk.
+		<p class="mx-auto max-w-lg text-base leading-relaxed text-slate-300 sm:text-lg">
+			Paste any YouTube playlist link to inspect tracks and extract video or audio files.
 		</p>
 	</div>
 
-	<!-- Form Input -->
+	<!-- Input Form -->
 	<form
 		onsubmit={handleFetchPlaylist}
-		class="glass-panel flex flex-col gap-2 rounded-2xl p-2 sm:flex-row sm:p-3"
+		class="glass-panel flex flex-col gap-2.5 rounded-2xl p-2 shadow-2xl sm:flex-row sm:p-3"
 	>
 		<input
 			type="url"
 			bind:value={playlistUrl}
-			placeholder="Paste YouTube Playlist URL..."
+			placeholder="Paste YouTube playlist link here..."
 			required
-			class="glass-input flex-1 rounded-xl px-4 py-3 text-sm placeholder-slate-500 focus:outline-none"
+			class="glass-input flex-1 rounded-xl border border-white/10 px-4 py-3.5 text-base placeholder-slate-400 focus:border-sky-400 focus:outline-none"
 		/>
 		<button
 			type="submit"
-			disabled={loading}
-			class="glass-button flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-6 py-3 text-xs font-semibold text-white transition disabled:opacity-50"
+			disabled={loading || isDownloading}
+			class="glass-button flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-7 py-3.5 text-sm font-semibold text-white transition disabled:opacity-50"
 		>
 			{#if loading}
-				<svg class="h-4 w-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+				<svg class="h-5 w-5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
 					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
 					></circle>
 					<path
@@ -78,9 +119,9 @@
 						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
 					></path>
 				</svg>
-				<span>Parsing Playlist...</span>
+				<span>Parsing...</span>
 			{:else}
-				<span>Fetch Tracks</span>
+				<span>Fetch Playlist</span>
 			{/if}
 		</button>
 	</form>
@@ -88,59 +129,69 @@
 	<!-- Error Alert -->
 	{#if errorMsg}
 		<div
-			class="rounded-2xl border border-red-500/30 bg-red-950/40 p-4 text-center text-xs text-red-400"
+			class="glass-card rounded-2xl border border-red-500/30 bg-red-950/20 p-4 text-center text-sm font-medium text-red-300 shadow-xl"
 		>
 			{errorMsg}
 		</div>
 	{/if}
 
-	<!-- Results List -->
+	<!-- Active Progress Stream -->
+	<ProgressBar {progress} {isDownloading} label="Downloading Track #{currentTrackIndex + 1}..." />
+
+	<!-- Playlist Track List -->
 	{#if playlistData}
 		<div class="space-y-4">
-			<!-- Playlist Meta Summary -->
+			<!-- Playlist Meta Header Card -->
 			<div
-				class="glass-panel flex flex-col items-start justify-between gap-4 rounded-2xl p-5 sm:flex-row sm:items-center"
+				class="glass-panel flex flex-col gap-4 rounded-2xl p-6 shadow-2xl sm:flex-row sm:items-center sm:justify-between"
 			>
 				<div class="space-y-1">
-					<h2 class="text-lg leading-tight font-bold text-white">{playlistData.title}</h2>
-					<p class="text-xs text-slate-400">
-						By {playlistData.uploader} •
-						<span class="font-semibold text-sky-400">{playlistData.totalCount} items</span>
+					<h2 class="text-xl font-extrabold text-white">{playlistData.title}</h2>
+					<p class="text-xs font-medium text-slate-300">
+						By <span class="font-semibold text-white">{playlistData.uploader}</span> •
+						<span class="font-semibold text-sky-400"
+							>{playlistData.entries?.length || 0} Tracks</span
+						>
 					</p>
 				</div>
 
-				<div class="flex w-full items-center gap-3 sm:w-auto">
+				<!-- Format Selector -->
+				<div class="flex items-center gap-2">
 					<select
 						bind:value={selectedFormat}
-						class="glass-input rounded-xl border border-white/10 bg-slate-900 px-3 py-1.5 text-xs text-slate-200"
+						class="glass-input rounded-xl border border-white/15 bg-slate-900/80 px-3.5 py-2 text-xs font-semibold text-slate-100 focus:outline-none"
 					>
-						<option value="bestvideo+bestaudio/best">Video (MP4 High)</option>
-						<option value="bestaudio/best">Audio Only (MP3/M4A)</option>
+						<option value="bestvideo+bestaudio/best">Video (MP4 HD)</option>
+						<option value="bestaudio/best">Audio (MP3/M4A)</option>
 					</select>
 				</div>
 			</div>
 
-			<!-- Track Items -->
-			<div class="space-y-2">
-				{#each playlistData.entries as track, idx (track.id)}
-					<div class="glass-card flex items-center justify-between gap-4 rounded-xl p-3 sm:p-4">
-						<div class="flex items-center gap-3 overflow-hidden">
-							<span class="w-6 shrink-0 text-center font-mono text-xs font-bold text-slate-500">
+			<!-- Track Item Cards -->
+			<div class="space-y-2.5">
+				{#each playlistData.entries as track, idx (track.id || idx)}
+					<div class="glass-card flex items-center justify-between gap-4 rounded-xl p-3.5 sm:p-4">
+						<div class="flex items-center gap-3.5 overflow-hidden">
+							<span
+								class="w-6 shrink-0 text-center font-mono text-xs font-extrabold text-slate-400"
+							>
 								{(idx + 1).toString().padStart(2, '0')}
 							</span>
 							<div class="space-y-0.5 truncate">
-								<h3 class="truncate text-xs font-semibold text-white sm:text-sm">{track.title}</h3>
-								<p class="text-[11px] text-slate-400">{track.uploader} • {track.duration}</p>
+								<h3 class="truncate text-sm font-bold text-white">{track.title}</h3>
+								<p class="text-xs text-slate-300">
+									{track.uploader || 'YouTube'} • {track.duration || 'N/A'}
+								</p>
 							</div>
 						</div>
 
-						<a
-							href="/api/download?url={encodeURIComponent(track.url)}&format={selectedFormat}"
-							download
-							class="glass-button shrink-0 cursor-pointer rounded-lg px-3 py-1.5 text-[11px] font-medium text-white"
+						<button
+							onclick={() => handleDownloadTrack(track.url, idx)}
+							disabled={isDownloading}
+							class="glass-button shrink-0 cursor-pointer rounded-xl px-4 py-2 text-xs font-semibold text-white transition disabled:opacity-50"
 						>
 							Download
-						</a>
+						</button>
 					</div>
 				{/each}
 			</div>
