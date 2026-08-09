@@ -36,7 +36,7 @@
 			links: [
 				{ label: 'Terms of Service', href: '/about' },
 				{ label: 'Privacy Policy', href: '/about' },
-				{ label: 'Open Source', href: 'https://github.com', external: true },
+				{ label: 'Open Source', href: 'https://github.com/syn606/streamy', external: true },
 				{ label: 'API Documentation', href: '/about', external: false }
 			]
 		}
