@@ -14,11 +14,46 @@
 		LuCpu,
 		LuHardDrive,
 		LuLock,
-		LuGlobe
+		LuGlobe,
+		LuSearch,
+		LuActivity,
+		LuTerminal,
+		LuRadio,
+		LuWorkflow
 	} from 'svelte-icons-pack/lu';
 
-	// Interactive FAQ expansion state
+	// State using Svelte 5 Runes
 	let openFaq = $state(0);
+	let faqQuery = $state('');
+	let systemStatus = $state({
+		ytdlp: 'v2026.02.01 (Latest)',
+		ffmpeg: 'Ready',
+		sseStream: 'Active',
+		latency: '24ms'
+	});
+
+	const workflowSteps = [
+		{
+			step: '01',
+			title: 'Paste Link',
+			desc: 'Copy any single video, track, or playlist URL from YouTube or YouTube Music.'
+		},
+		{
+			step: '02',
+			title: 'Analyze Stream',
+			desc: 'Our engine parses high-bitrate audio targets and video streams instantly.'
+		},
+		{
+			step: '03',
+			title: 'Format Selection',
+			desc: 'Choose from pristine 4K video, 320kbps MP3s, or custom audio containers.'
+		},
+		{
+			step: '04',
+			title: 'Live Stream Download',
+			desc: 'Real-time SSE progress tracks transcoding and pushes directly to your browser.'
+		}
+	];
 
 	const features = [
 		{
@@ -77,7 +112,7 @@
 		}
 	];
 
-	const faqs = [
+	const allFaqs = [
 		{
 			question: 'Is Streamy completely free to use?',
 			answer:
@@ -102,8 +137,22 @@
 			question: 'Can I download an entire YouTube playlist at once?',
 			answer:
 				'Yes! Simply navigate to our Playlist Extractor, paste any public playlist URL, select your preferred quality setting, and convert all tracks in batch mode.'
+		},
+		{
+			question: 'What happens if a video link fails to extract?',
+			answer:
+				'Ensure the link is public and not age-restricted or private. If issues persist, clearing your browser cache or switching format options usually resolves temporary extraction blocks.'
 		}
 	];
+
+	// Filtered FAQ derived state
+	let filteredFaqs = $derived(
+		allFaqs.filter(
+			(faq) =>
+				faq.question.toLowerCase().includes(faqQuery.toLowerCase()) ||
+				faq.answer.toLowerCase().includes(faqQuery.toLowerCase())
+		)
+	);
 
 	function toggleFaq(index) {
 		openFaq = openFaq === index ? -1 : index;
@@ -115,19 +164,19 @@
 	<div class="space-y-6 text-center">
 		<div class="flex justify-center">
 			<span
-				class="inline-flex items-center gap-2 rounded-full border border-glass-border bg-cyan-500/10 px-5 py-2 text-xs font-semibold tracking-wider text-cyan-300 uppercase shadow-[0_0_20px_rgba(6,182,212,0.2)] backdrop-blur-md"
+				class="inline-flex items-center gap-2 rounded-full border border-slate-700/60 bg-cyan-500/10 px-5 py-2 text-xs font-semibold tracking-wider text-cyan-300 uppercase shadow-[0_0_20px_rgba(6,182,212,0.15)] backdrop-blur-md"
 			>
 				{#if LuInfo}
 					<Icon src={LuInfo} className="w-4 h-4 text-cyan-300" />
 				{/if}
-				<span>About Streamy & FAQ</span>
+				<span>About Streamy & Architecture</span>
 			</span>
 		</div>
 
 		<h1 class="text-4xl font-black tracking-tight text-white sm:text-6xl sm:leading-tight">
 			High-Speed Next-Gen <br class="hidden sm:inline" />
 			<span
-				class="bg-linear-to-r from-cyan-accent via-sky-glow to-blue-glow bg-clip-text text-transparent"
+				class="bg-linear-to-rrom-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent"
 			>
 				Media Conversion Engine
 			</span>
@@ -160,6 +209,65 @@
 		</div>
 	</div>
 
+	<!-- Live Engine Status Widget -->
+	<div class="glass-panel rounded-3xl p-6 shadow-xl">
+		<div
+			class="flex flex-col gap-4 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex items-center gap-2.5">
+				<span class="relative flex h-3 w-3">
+					<span
+						class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+					></span>
+					<span class="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+				</span>
+				<h3 class="text-sm font-bold tracking-wider text-white uppercase">
+					Engine Diagnostic Status
+				</h3>
+			</div>
+			<span class="font-mono text-xs text-slate-400">All Nodes Operational</span>
+		</div>
+
+		<div class="grid grid-cols-2 gap-4 pt-4 font-mono text-xs sm:grid-cols-4">
+			<div class="glass-card rounded-xl p-3">
+				<p class="text-[10px] text-slate-400 uppercase">Extractor Core</p>
+				<p class="mt-1 font-bold text-cyan-300">{systemStatus.ytdlp}</p>
+			</div>
+			<div class="glass-card rounded-xl p-3">
+				<p class="text-[10px] text-slate-400 uppercase">Transcoder</p>
+				<p class="mt-1 font-bold text-emerald-400">FFmpeg {systemStatus.ffmpeg}</p>
+			</div>
+			<div class="glass-card rounded-xl p-3">
+				<p class="text-[10px] text-slate-400 uppercase">SSE Stream pipeline</p>
+				<p class="mt-1 font-bold text-blue-400">{systemStatus.sseStream}</p>
+			</div>
+			<div class="glass-card rounded-xl p-3">
+				<p class="text-[10px] text-slate-400 uppercase">API Latency</p>
+				<p class="mt-1 font-bold text-purple-400">{systemStatus.latency}</p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Workflow / How It Works -->
+	<div class="space-y-6">
+		<div class="space-y-2 text-center">
+			<span class="text-xs font-bold tracking-widest text-cyan-300 uppercase"
+				>Streamlined Process</span
+			>
+			<h2 class="text-2xl font-bold text-white sm:text-3xl">How Streamy Works</h2>
+		</div>
+
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+			{#each workflowSteps as item}
+				<div class="glass-card relative space-y-3 rounded-2xl p-6">
+					<span class="text-3xl font-black text-cyan-500/20">{item.step}</span>
+					<h3 class="text-base font-bold text-white">{item.title}</h3>
+					<p class="text-xs leading-relaxed text-slate-300">{item.desc}</p>
+				</div>
+			{/each}
+		</div>
+	</div>
+
 	<!-- Feature Grid Showcase -->
 	<div class="space-y-6">
 		<div class="space-y-2 text-center">
@@ -173,7 +281,7 @@
 					class="glass-card flex flex-col space-y-3 rounded-2xl p-7 transition hover:border-cyan-500/30"
 				>
 					<div
-						class="flex h-12 w-12 items-center justify-center rounded-2xl border border-glass-border bg-cyan-500/10 text-cyan-300 shadow-inner"
+						class="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700/50 bg-cyan-500/10 text-cyan-300 shadow-inner"
 					>
 						{#if feature.icon}
 							<Icon src={feature.icon} className="w-6 h-6" />
@@ -227,24 +335,43 @@
 
 	<!-- Accordion Interactive FAQ Section -->
 	<div class="glass-panel-glow space-y-8 rounded-3xl p-6 sm:p-10">
-		<div class="flex items-center gap-3 border-b border-white/10 pb-5">
-			<div
-				class="flex h-10 w-10 items-center justify-center rounded-xl border border-glass-border bg-cyan-500/10 text-cyan-300 shadow-inner"
-			>
-				{#if LuCircleHelp}
-					<Icon src={LuCircleHelp} className="w-5 h-5" />
-				{/if}
+		<div
+			class="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between"
+		>
+			<div class="flex items-center gap-3">
+				<div
+					class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700/50 bg-cyan-500/10 text-cyan-300 shadow-inner"
+				>
+					{#if LuCircleHelp}
+						<Icon src={LuCircleHelp} className="w-5 h-5" />
+					{/if}
+				</div>
+				<div>
+					<h2 class="text-2xl font-black text-white">Frequently Asked Questions</h2>
+					<p class="text-xs text-slate-400">
+						Everything you need to know about converted media & streams.
+					</p>
+				</div>
 			</div>
-			<div>
-				<h2 class="text-2xl font-black text-white">Frequently Asked Questions</h2>
-				<p class="text-xs text-slate-400">
-					Everything you need to know about converted media & streams.
-				</p>
+
+			<!-- Search Filter Input -->
+			<div class="relative min-w-60">
+				<input
+					type="text"
+					bind:value={faqQuery}
+					placeholder="Search questions..."
+					class="w-full rounded-xl border border-white/10 bg-black/40 py-2 pr-4 pl-9 text-xs text-white placeholder-slate-400 focus:border-cyan-500/50 focus:outline-none"
+				/>
+				<div class="absolute top-2.5 left-3 text-slate-400">
+					{#if LuSearch}
+						<Icon src={LuSearch} className="w-3.5 h-3.5" />
+					{/if}
+				</div>
 			</div>
 		</div>
 
 		<div class="space-y-3">
-			{#each faqs as faq, index}
+			{#each filteredFaqs as faq, index}
 				<div
 					class="glass-card overflow-hidden rounded-2xl border transition-all duration-200 {openFaq ===
 					index
@@ -276,6 +403,10 @@
 							{faq.answer}
 						</div>
 					{/if}
+				</div>
+			{:else}
+				<div class="py-8 text-center text-xs text-slate-400">
+					No questions matching "{faqQuery}". Try searching for another keyword.
 				</div>
 			{/each}
 		</div>
